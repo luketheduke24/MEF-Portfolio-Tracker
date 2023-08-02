@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MEF Portfolio Tracker</title>
+    <style>
+        .bar  {
+            height: 3px;
+            background: black
+        }
+        .column {
+            float: left;
+            width: 50%;
+        }
+
+        .img {
+            width: 50%; 
+
+        }
+        .table {
+            width: 50%;
+
+        }
+        .caption {
+            font-size: 18.72px;
+            font-weight: bolder;
+        }
+    </style>
+<body>
+    
+    <div>  
+        <h1><center>Minutemen Equity Fund</center><h1>
+        <h2><center> MEF is an autonomous, student-run, investment fund with a long-only, value oriented investment strategy.</center></h2>
+    </div>
+
+    <div class="bar"></div>
+
+    <div class="column">
+        <h3>Minutemen Equity Mid-Cap Value ETF (TICKER)</h3>
+        <div></div>
+        <p id="testvalue">REAL TIME PRICE:</p>
+    </div>
+    </div>
+
+    <script>
+        const LiveValueData = document.getElementById("testvalue");
+        const LiveValueEventSource = new EventSource("/liveportfoliovalue");
+
+        LiveValueEventSource.onmessage = function(event) {
+            LiveValueData.innerHTML = "REAL TIME PRICE: $" + event.data;
+        };
+    </script>
+
+</body>
+</html>
