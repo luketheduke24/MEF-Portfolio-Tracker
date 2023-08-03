@@ -40,15 +40,22 @@
         <h3>Minutemen Equity Mid-Cap Value ETF (TICKER)</h3>
         <div></div>
         <p id="testvalue">REAL TIME PRICE:</p>
+        <p id="timevalue">As of:</p>
     </div>
     </div>
 
     <script>
         const LiveValueData = document.getElementById("testvalue");
+        const TimeValueData = document.getElementById("timevalue");
         const LiveValueEventSource = new EventSource("/liveportfoliovalue");
 
         LiveValueEventSource.onmessage = function(event) {
-            LiveValueData.innerHTML = "REAL TIME PRICE: $" + event.data;
+            const data = JSON.parse(event.data);
+            const realvalue = data.value
+            const time = data.asof
+            LiveValueData.innerHTML = "REAL TIME PRICE: $" + realvalue;
+            TimeValueData.innerHTML = "As of: " + time;
+
         };
     </script>
 

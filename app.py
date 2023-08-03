@@ -66,7 +66,7 @@ def update_portfolio_value():
     def generate():
         while True:
             now = datetime.now().replace(microsecond=0)
-            weekday = datetime.now.strftime("%w")
+            weekday = int(now.strftime("%w"))
             
             marketopen = now.replace(hour=9, minute=30, second=0, microsecond=0)
             marketclose = now.replace(hour=16, minute=0, second=0, microsecond=0)
@@ -88,13 +88,15 @@ def update_portfolio_value():
                     for result in concurrent.futures.as_completed(results):
                         current_value += result.result()
                 print(f'Current: {current_value}')
-                yield f'data: {current_value:.02f}\n\n'
-                time.sleep(300)
+                print(f'{now}')
 
-            time.sleep(0.5)
-    return Response(generate(), content_type="text/event-stream")
-
-
+                now = now.strftime("%I:%M:%S %p")
+                yield f'data: {{"value": {current_value:.02f}, "asof": "{now}"}}\n\n'
+                print("sleeping 5 minutes")
+                time.sleep(10)
+            else:
+                time.sleep(0.5)
+    return Response(generate(), content_type='text/event-stream')
 
 if __name__ == "__main__":
     app.run(debug=True)
