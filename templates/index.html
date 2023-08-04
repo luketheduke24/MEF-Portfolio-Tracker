@@ -13,50 +13,48 @@
             float: left;
             width: 50%;
         }
-
-        .img {
-            width: 50%; 
-
-        }
-        .table {
-            width: 50%;
-
-        }
-        .caption {
-            font-size: 18.72px;
-            font-weight: bolder;
-        }
+        .p_no_indent {display:inline}
+        .center {text-align: center}
     </style>
 <body>
     
-    <div>  
-        <h1><center>Minutemen Equity Fund</center><h1>
-        <h2><center> MEF is an autonomous, student-run, investment fund with a long-only, value oriented investment strategy.</center></h2>
+    <div class="center">  
+        <h1>Minutemen Equity Fund<h1>
+        <h2> MEF is an autonomous, student-run, investment fund with a long-only, value oriented investment strategy.</h2>
     </div>
 
     <div class="bar"></div>
 
     <div class="column">
         <h3>Minutemen Equity Mid-Cap Value ETF (TICKER)</h3>
-        <div></div>
-        <p id="testvalue">REAL TIME PRICE:</p>
+        <p class="p_no_indent" id="testvalue">REAL TIME PRICE:</p>
+        <p class="p_no_indent" id="absolutechange"> Change:</p>
         <p id="timevalue">As of:</p>
-    </div>
     </div>
 
     <script>
         const LiveValueData = document.getElementById("testvalue");
         const TimeValueData = document.getElementById("timevalue");
+        const absolutechangeValueData = document.getElementById("absolutechange");
         const LiveValueEventSource = new EventSource("/liveportfoliovalue");
-
         LiveValueEventSource.onmessage = function(event) {
             const data = JSON.parse(event.data);
             const realvalue = data.value
             const time = data.asof
+            const absolute_change = data.abs_change
             LiveValueData.innerHTML = "REAL TIME PRICE: $" + realvalue;
             TimeValueData.innerHTML = "As of: " + time;
+            absolutechangeValueData.innerHTML = absolute_change
 
-        };
+            function changeTextColor(absolute_change) {
+                if (absolute_change.startsWith("-")) {
+                    absolutechangeValueData.style.color = "red";
+                } else {
+                    absolutechangeValueData.style.color = "green";
+                }
+                }
+            changeTextColor(absolute_change)
+            };
     </script>
 
 </body>

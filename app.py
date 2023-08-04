@@ -1,7 +1,7 @@
 from flask import Flask, render_template, Response
 import concurrent.futures
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 import yfinance as yf
 
 app = Flask(__name__)
@@ -55,6 +55,22 @@ def opening_position_value(stock):
    data = yf.Ticker(stock['ticker']).info
    return float(data['previousClose'] * stock['shares'])
 
+def delta(current_value, opening_value):
+    abs_change = current_value - opening_value
+    per_change = ((current_value - opening_value)/opening_value)*100
+    
+    if abs_change > 0:
+        abs_change = f'+{abs_change:.02f}'
+    else: 
+        abs_change = f'-{abs(abs_change):.02f}'
+    
+    if per_change > 0:
+        per_change = f'+{per_change:.02f}%'
+    else:
+        per_change = f'-{abs(per_change):.02f}%'
+
+    return abs_change, per_change
+
 
 @app.route("/")
 def index():
@@ -70,8 +86,8 @@ def update_portfolio_value():
             
             marketopen = now.replace(hour=9, minute=30, second=0, microsecond=0)
             marketclose = now.replace(hour=16, minute=0, second=0, microsecond=0)
-           
-            opening_value = 0
+
+            opening_value = 3000
             current_value = 0
             
             if now == marketopen and weekday < 5:            
@@ -90,12 +106,19 @@ def update_portfolio_value():
                 print(f'Current: {current_value}')
                 print(f'{now}')
 
+                abs_change = delta(current_value, opening_value)[0]
+                per_change = delta(current_value, opening_value)[1]
+
+                print(abs_change, per_change)
                 now = now.strftime("%I:%M:%S %p")
-                yield f'data: {{"value": {current_value:.02f}, "asof": "{now}"}}\n\n'
+                yield f'data: {{"value": {current_value:.02f}, "asof": "{now}", "abs_change":"{abs_change} ({per_change})"}}\n\n'
                 print("sleeping 5 minutes")
                 time.sleep(10)
-            else:
-                time.sleep(0.5)
+            
+            if now > marketclose:
+                print("overnight sleep")
+                time.sleep(57600)
+
     return Response(generate(), content_type='text/event-stream')
 
 if __name__ == "__main__":
