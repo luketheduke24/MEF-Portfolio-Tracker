@@ -26,10 +26,10 @@
     <div class="bar"></div>
 
     <div class="column">
-        <h3>Minutemen Equity Mid-Cap Value ETF (TICKER)</h3>
-        <p class="p_no_indent" id="testvalue">REAL TIME PRICE:</p>
-        <p class="p_no_indent" id="absolutechange"> Change:</p>
-        <p id="timevalue">As of:</p>
+        <h3>Minutemen Equity Mid-Cap Value ETF (MEF)</h3>
+        <p class="p_no_indent" id="testvalue"></p>
+        <p class="p_no_indent" id="absolutechange"></p>
+        <p id="timevalue"></p>
     </div>
 
     <script>
@@ -42,7 +42,7 @@
             const realvalue = data.value
             const time = data.asof
             const absolute_change = data.abs_change
-            LiveValueData.innerHTML = "REAL TIME PRICE: $" + realvalue;
+            LiveValueData.innerHTML = "$" + realvalue;
             TimeValueData.innerHTML = "As of: " + time;
             absolutechangeValueData.innerHTML = absolute_change
 

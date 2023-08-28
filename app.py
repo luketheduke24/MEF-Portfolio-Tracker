@@ -1,51 +1,53 @@
 from flask import Flask, render_template, Response
 import concurrent.futures
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 import yfinance as yf
 
 app = Flask(__name__)
 
 
 Portfolio = [
-{'ticker':'GOOG', 'shares':1.0}, 
-{'ticker':'AAPL', 'shares':1.0},
-{'ticker':'ARRY', 'shares':1.0},
-{'ticker':'AZPN', 'shares':1.0}, 
-{'ticker':'AY', 'shares':1.0}, 
-{'ticker':'CG', 'shares':1.0},
-{'ticker':'DKS', 'shares':1.0},
-{'ticker':'LOCO', 'shares':1.0},
-{'ticker':'EHC', 'shares':1.0},
-{'ticker':'ES', 'shares':1.0},
-{'ticker':'FMC', 'shares':1.0},
-{'ticker':'FOXF', 'shares':1.0},
-{'ticker':'GLPI', 'shares':1.0},
-{'ticker':'GNTX', 'shares':1.0},
-{'ticker':'GOOD', 'shares':1.0},
-{'ticker':'GMED', 'shares':1.0},
-{'ticker':'HGV', 'shares':1.0},
-{'ticker':'HOLX', 'shares':1.0},
-{'ticker':'ICE', 'shares':1.0},
-{'ticker':'J', 'shares':1.0},
-{'ticker':'JNJ', 'shares':1.0},
-{'ticker':'JNPR', 'shares':1.0},
-{'ticker':'MTZ', 'shares':1.0},
-{'ticker':'OUT', 'shares':1.0},
-{'ticker':'QLYS', 'shares':1.0},
-{'ticker':'RS', 'shares':1.0},
-{'ticker':'RVTY', 'shares':1.0},
-{'ticker':'SRE', 'shares':1.0},
-{'ticker':'SCI', 'shares':1.0},
-{'ticker':'SHW', 'shares':1.0},
-{'ticker':'SUM', 'shares':1.0},
-{'ticker':'TFX', 'shares':1.0},
-{'ticker':'TJX', 'shares':1.0},
-{'ticker':'VRNT', 'shares':1.0},
-{'ticker':'VST', 'shares':1.0},
-{'ticker':'VOYA', 'shares':1.0},
-{'ticker':'WAL', 'shares':1.0},
-{'ticker':'ZI', 'shares':1.0}]
+{'ticker':'GOOG', 'shares':200.0}, 
+{'ticker':'AAPL', 'shares':100.0},
+{'ticker':'ARRY', 'shares':550.0},
+{'ticker':'AZPN', 'shares':23.0}, 
+{'ticker':'AY', 'shares':200.0}, 
+{'ticker':'CRL', 'shares':41.0},
+{'ticker':'DKS', 'shares':120.0},
+{'ticker':'LOCO', 'shares':500.0},
+{'ticker':'EHC', 'shares':112.0},
+{'ticker':'ES', 'shares':91.0},
+{'ticker':'FMC', 'shares':70.0},
+{'ticker':'FOXF', 'shares':90.0},
+{'ticker':'GLPI', 'shares':260.0},
+{'ticker':'GNTX', 'shares':280.0},
+{'ticker':'GOOD', 'shares':724.0},
+{'ticker':'GMED', 'shares':145.0},
+{'ticker':'HGV', 'shares':180.0},
+{'ticker':'HOLX', 'shares':130.0},
+{'ticker':'ICE', 'shares':50.0},
+{'ticker':'J', 'shares':75.0},
+{'ticker':'JNJ', 'shares':36.0},
+{'ticker':'JNPR', 'shares':230.0},
+{'ticker':'MTZ', 'shares':140.0},
+{'ticker':'OUT', 'shares':640.0},
+{'ticker':'QLYS', 'shares':85.0},
+{'ticker':'RS', 'shares':70.0},
+{'ticker':'RVTY', 'shares':70.0},
+{'ticker':'SRE', 'shares':40.0},
+{'ticker':'SCI', 'shares':130.0},
+{'ticker':'SWK', 'shares':47.0},
+{'ticker':'SUM', 'shares':406.0},
+{'ticker':'TFX', 'shares':22.0},
+{'ticker':'CG', 'shares':270.0},
+{'ticker':'SHW', 'shares':37.0},
+{'ticker':'TJX', 'shares':202.0},
+{'ticker':'VRNT', 'shares':140.0},
+{'ticker':'VST', 'shares':200.0},
+{'ticker':'VOYA', 'shares':65.0},
+{'ticker':'WAL', 'shares':70.0},
+{'ticker':'ZI', 'shares':320.0}]
 
 def current_position_value(stock):
    data = yf.Ticker(stock['ticker']).info
@@ -55,22 +57,31 @@ def opening_position_value(stock):
    data = yf.Ticker(stock['ticker']).info
    return float(data['previousClose'] * stock['shares'])
 
-def delta(current_value, opening_value):
-    abs_change = current_value - opening_value
-    per_change = ((current_value - opening_value)/opening_value)*100
-    
-    if abs_change > 0:
-        abs_change = f'+{abs_change:.02f}'
-    else: 
-        abs_change = f'-{abs(abs_change):.02f}'
-    
-    if per_change > 0:
-        per_change = f'+{per_change:.02f}%'
+def style(current_value, abs_change, per_change):
+    current_value = "{:,.2f}".format(float(current_value))
+    if abs_change < 0:
+        abs_change = f'-{"{:,.2f}".format(float(abs_change))}'
+        per_change = f'-{"{:.2f}".format(float(per_change))}%'
     else:
-        per_change = f'-{abs(per_change):.02f}%'
+        abs_change = f'+{"{:,.2f}".format(float(abs_change))}'
+        per_change = f'+{"{:.2f}".format(float(per_change))}%'
+    return current_value, abs_change, per_change
 
-    return abs_change, per_change
+def opening_thread():
+    opening_value = 18589.21
+    with concurrent.futures.ProcessPoolExecutor(10) as executor:
+        results = [executor.submit(opening_position_value, stock) for stock in Portfolio]
+        for result in concurrent.futures.as_completed(results):
+            opening_value += result.result()
+    return opening_value
 
+def current_thread():
+    current_value = 18589.21
+    with concurrent.futures.ProcessPoolExecutor(10) as executor:
+        results = [executor.submit(current_position_value, stock) for stock in Portfolio]
+        for result in concurrent.futures.as_completed(results):
+            current_value += result.result()
+    return current_value
 
 @app.route("/")
 def index():
@@ -83,41 +94,30 @@ def update_portfolio_value():
         while True:
             now = datetime.now().replace(microsecond=0)
             weekday = int(now.strftime("%w"))
-            
             marketopen = now.replace(hour=9, minute=30, second=0, microsecond=0)
-            marketclose = now.replace(hour=16, minute=0, second=0, microsecond=0)
+            marketclose = now.replace(hour=16, minute=30, second=0, microsecond=0)
 
-            opening_value = 3000
-            current_value = 0
-            
-            if now == marketopen and weekday < 5:            
-                with concurrent.futures.ProcessPoolExecutor(10) as executor:
-                    results = [executor.submit(opening_position_value, stock) for stock in Portfolio]
-                    for result in concurrent.futures.as_completed(results):
-                        opening_value += result.result()
-                print(f'Opening: {opening_value}')
-                yield f'data: {opening_value:.02f}\n\n'
+            executors_list = []
+            with concurrent.futures.ProcessPoolExecutor(10) as executor:
+                executors_list.append(executor.submit(opening_thread))
+                executors_list.append(executor.submit(current_thread))
+    
+            opening_value = executors_list[0].result()
+            current_value = executors_list[1].result()
 
-            if marketopen < now < marketclose and weekday < 5:
-                with concurrent.futures.ProcessPoolExecutor(10) as executor:
-                    results = [executor.submit(current_position_value, stock) for stock in Portfolio]
-                    for result in concurrent.futures.as_completed(results):
-                        current_value += result.result()
-                print(f'Current: {current_value}')
-                print(f'{now}')
+            abs_change = float(current_value - opening_value)
+            per_change = float(((current_value - opening_value)/current_value)*100)
 
-                abs_change = delta(current_value, opening_value)[0]
-                per_change = delta(current_value, opening_value)[1]
+            current_value, abs_change, per_change = style(current_value, abs_change, per_change)
 
-                print(abs_change, per_change)
-                now = now.strftime("%I:%M:%S %p")
-                yield f'data: {{"value": {current_value:.02f}, "asof": "{now}", "abs_change":"{abs_change} ({per_change})"}}\n\n'
-                print("sleeping 5 minutes")
-                time.sleep(10)
-            
-            if now > marketclose:
-                print("overnight sleep")
-                time.sleep(57600)
+            time_stamp = datetime.now().replace(microsecond=0)
+
+            if marketopen < now < marketclose and 0 < weekday < 6:
+                yield f'data: {{"value": "{current_value}", "asof": "{time_stamp.strftime("%I:%M:%S %p")}", "abs_change":"{abs_change} ({per_change})"}}\n\n'
+                time.sleep(8)
+            else:
+                yield f'data: {{"value": "{current_value}", "asof": "{time_stamp.strftime("%I:%M:%S %p")}", "abs_change":"{abs_change} ({per_change})"}}\n\n'
+                time.sleep(8)
 
     return Response(generate(), content_type='text/event-stream')
 
