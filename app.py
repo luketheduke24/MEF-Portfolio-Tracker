@@ -92,11 +92,6 @@ def index():
 def update_portfolio_value():
     def generate():
         while True:
-            now = datetime.now().replace(microsecond=0)
-            weekday = int(now.strftime("%w"))
-            marketopen = now.replace(hour=9, minute=30, second=0, microsecond=0)
-            marketclose = now.replace(hour=16, minute=30, second=0, microsecond=0)
-
             executors_list = []
             with concurrent.futures.ProcessPoolExecutor(10) as executor:
                 executors_list.append(executor.submit(opening_thread))
@@ -110,14 +105,8 @@ def update_portfolio_value():
 
             current_value, abs_change, per_change = style(current_value, abs_change, per_change)
 
-            time_stamp = datetime.now().replace(microsecond=0)
-
-            if marketopen < now < marketclose and 0 < weekday < 6:
-                yield f'data: {{"value": "{current_value}", "asof": "{time_stamp.strftime("%I:%M:%S %p")}", "abs_change":"{abs_change} ({per_change})"}}\n\n'
-                time.sleep(8)
-            else:
-                yield f'data: {{"value": "{current_value}", "asof": "{time_stamp.strftime("%I:%M:%S %p")}", "abs_change":"{abs_change} ({per_change})"}}\n\n'
-                time.sleep(8)
+            yield f'data: {{"value": "{current_value}", "asof": "{datetime.now().replace(microsecond=0).strftime("%I:%M:%S %p")}", "abs_change":"{abs_change} ({per_change})"}}\n\n'
+            time.sleep(10)
 
     return Response(generate(), content_type='text/event-stream')
 
