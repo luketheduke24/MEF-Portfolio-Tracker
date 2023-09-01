@@ -2,6 +2,7 @@ from flask import Flask, render_template, Response
 import concurrent.futures
 import time
 from datetime import datetime
+import pytz
 import yfinance as yf
 
 app = Flask(__name__)
@@ -60,8 +61,8 @@ def opening_position_value(stock):
 def style(current_value, abs_change, per_change):
     current_value = "{:,.2f}".format(float(current_value))
     if abs_change < 0:
-        abs_change = f'-{"{:,.2f}".format(float(abs_change))}'
-        per_change = f'-{"{:.2f}".format(float(per_change))}%'
+        abs_change = f'{"{:,.2f}".format(float(abs_change))}'
+        per_change = f'{"{:.2f}".format(float(per_change))}%'
     else:
         abs_change = f'+{"{:,.2f}".format(float(abs_change))}'
         per_change = f'+{"{:.2f}".format(float(per_change))}%'
@@ -69,7 +70,7 @@ def style(current_value, abs_change, per_change):
 
 def opening_thread():
     opening_value = 18589.21
-    with concurrent.futures.ProcessPoolExecutor(10) as executor:
+    with concurrent.futures.ProcessPoolExecutor() as executor:
         results = [executor.submit(opening_position_value, stock) for stock in Portfolio]
         for result in concurrent.futures.as_completed(results):
             opening_value += result.result()
@@ -77,7 +78,7 @@ def opening_thread():
 
 def current_thread():
     current_value = 18589.21
-    with concurrent.futures.ProcessPoolExecutor(10) as executor:
+    with concurrent.futures.ProcessPoolExecutor() as executor:
         results = [executor.submit(current_position_value, stock) for stock in Portfolio]
         for result in concurrent.futures.as_completed(results):
             current_value += result.result()
@@ -93,7 +94,7 @@ def update_portfolio_value():
     def generate():
         while True:
             executors_list = []
-            with concurrent.futures.ProcessPoolExecutor(10) as executor:
+            with concurrent.futures.ProcessPoolExecutor() as executor:
                 executors_list.append(executor.submit(opening_thread))
                 executors_list.append(executor.submit(current_thread))
     
@@ -105,10 +106,10 @@ def update_portfolio_value():
 
             current_value, abs_change, per_change = style(current_value, abs_change, per_change)
 
-            yield f'data: {{"value": "{current_value}", "asof": "{datetime.now().replace(microsecond=0).strftime("%I:%M:%S %p")}", "abs_change":"{abs_change} ({per_change})"}}\n\n'
+            yield f'data: {{"value": "{current_value}", "asof": "{datetime.now(pytz.timezone("US/Eastern")).replace(microsecond=0).strftime("%I:%M:%S %p")}", "abs_change":"{abs_change} ({per_change})"}}\n\n'
             time.sleep(10)
 
     return Response(generate(), content_type='text/event-stream')
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
